@@ -1,29 +1,35 @@
-const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../.env") });
-
 const express = require("express");
 const cors = require("cors");
-const authRoutes = require("./routes/authRoutes");
+require("dotenv").config();
 
 const connectDB = require("./config/db");
 
-const app = express();
+// routes
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const departmentRoutes = require("./routes/departmentRoutes");
+const doctorRoutes = require("./routes/doctorRoutes");
+const patientRoutes = require("./routes/patientRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const seedRoutes = require("./routes/seedRoutes");
 
-// Middleware
+const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => res.send("HealthEase API running "));
+app.get("/api", (req, res) => res.json({ message: "HealthEase base API " }));
+
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/doctors", doctorRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/seed", seedRoutes);
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("HealthEase API is running...");
-});
-
-// Start
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
-  app.listen(PORT, () =>
-    console.log(`Server running on port ${PORT}`)
-  );
-});
+connectDB()
+  .then(() => app.listen(PORT, () => console.log(`Server running on ${PORT}`)))
+  .catch((e) => console.log("DB error:", e.message));
