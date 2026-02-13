@@ -1,55 +1,48 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./styles.css";
+import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/AdminLayout";
 
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import Home from "./pages/Home";
+import FindDoctors from "./pages/FindDoctors";
+import DoctorDetails from "./pages/DoctorDetails";
+import BookAppointment from "./pages/BookAppointment";
+import MyAppointments from "./pages/MyAppointments";
+import PatientDashboard from "./pages/PatientDashboard";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
-function App() {
-  const [count, setCount] = useState(0);
-  const [msg, setMsg] = useState("");
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminDepartments from "./pages/admin/AdminDepartments";
 
-  // Backend connection test
-  useEffect(() => {
-    axios
-      .get("http://localhost:5000/")
-      .then((res) => setMsg(res.data))
-      .catch(() => setMsg("Backend not connected"));
-  }, []);
-
+export default function App() {
   return (
-    <>
-      {/* Logos */}
-      <div>
-        <a href="https://vite.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/find-doctors" element={<FindDoctors />} />
+          <Route path="/doctor/:id" element={<DoctorDetails />} />
 
-      {/* Title */}
-      <h1>HealthEase</h1>
+          <Route path="/book/:doctorId" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
+          <Route path="/appointments" element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
+          <Route path="/patient" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
 
-      {/* Backend Status */}
-      <p style={{ fontWeight: "bold", color: "green" }}>{msg}</p>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-      {/* Counter Card */}
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+          {/* Admin */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="departments" element={<AdminDepartments />} />
+            {/* add doctors/patients/appointments pages here */}
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
-
-export default App;
