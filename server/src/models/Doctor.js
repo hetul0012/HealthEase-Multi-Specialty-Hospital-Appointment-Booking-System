@@ -8,23 +8,26 @@ const doctorSchema = new mongoose.Schema(
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
-      required: true
+      required: true,
     },
 
-    location: { type: String, default: "Main Hospital" },
+    imageUrl: { type: String, default: "" },
+
+    rating: { type: Number, default: 4.8 },
+    reviews: { type: Number, default: 100 },
+
+    experienceYears: { type: Number, default: 10 },
 
     availableStatus: {
       type: String,
       enum: ["Available Today", "Available Tomorrow", "Not Available"],
-      default: "Available Today"
+      default: "Available Today",
     },
 
     nextSlot: { type: String, default: "10:00 AM - 11:00 AM" },
+    location: { type: String, default: "Main Hospital, Floor 1" },
 
-    fee: { type: Number, default: 100 },
-    experience: { type: Number, default: 5 },
-
-    status: { type: String, enum: ["Active", "Inactive"], default: "Active" }
+    status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
   },
   { timestamps: true }
 );

@@ -1,51 +1,168 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/api";
 
-export default function FindDoctors() {
-  const [params, setParams] = useSearchParams();
-  const departmentId = params.get("departmentId") || "";
-  const [q, setQ] = useState(params.get("q") || "");
-  const [depts, setDepts] = useState([]);
-  const [docs, setDocs] = useState([]);
+function starsText(rating = 5) {
+  const full = Math.round(rating);
+  return "★★★★★".slice(0, full);
+}
 
-  const load = async () => {
-    const [d1, d2] = await Promise.all([
-      api.get("/api/departments"),
-      api.get(`/api/doctors?departmentId=${departmentId}&q=${q}`)
-    ]);
-    setDepts(d1.data);
-    setDocs(d2.data);
+export default function FindDoctors() {
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+
+  // read query params coming from Home search
+  const initialQ = params.get("q") || "";
+  const initialDept = params.get("departmentId") || "";
+  const initialSort = params.get("sort") || "recommended";
+
+  const [q, setQ] = useState(initialQ);
+  const [departmentId, setDepartmentId] = useState(initialDept);
+  const [sort, setSort] = useState(initialSort);
+
+  const [departments, setDepartments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = async (override = {}) => {
+    setLoading(true);
+    try {
+      const deptRes = await api.get("/api/departments");
+      setDepartments(deptRes.data);
+
+      const query = new URLSearchParams();
+      if ((override.q ?? q).trim()) query.set("q", (override.q ?? q).trim());
+      if (override.departmentId ?? departmentId) query.set("departmentId", override.departmentId ?? departmentId);
+      if (override.sort ?? sort) query.set("sort", override.sort ?? sort);
+
+      const docRes = await api.get(`/api/doctors?${query.toString()}`);
+      setDoctors(docRes.data);
+    } catch (e) {
+      setDepartments([]);
+      setDoctors([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, [departmentId]);
+  useEffect(() => {
+    fetchAll();
+    // eslint-disable-next-line
+  }, []);
+
+  const departmentOptions = useMemo(() => departments, [departments]);
+
+  const onSearch = () => {
+    fetchAll({ q, departmentId, sort });
+  };
 
   return (
-    <div className="container">
-      <h2>Find Your Doctor</h2>
+    <div className="page">
+      <div className="container" style={{ padding: "28px 18px" }}>
+        <h1 className="page-title">Find Your Doctor</h1>
+        <p className="page-subtitle">Browse our network of experienced healthcare professionals</p>
 
-      <div className="card">
-        <div className="row">
-          <input className="input" style={{ flex: 1 }} placeholder="Search by name..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <select className="input" value={departmentId} onChange={(e) => setParams({ departmentId: e.target.value, q })}>
-            <option value="">All Departments</option>
-            {depts.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
-          </select>
-          <button className="btn btn-primary" onClick={() => load()}>Search</button>
-        </div>
-      </div>
+        {/* Filter Card */}
+        <div className="card filter-card">
+          <div className="filter-grid">
+            <div className="field">
+              <label>Search Doctor</label>
+              <input
+                className="input"
+                placeholder="Search by name or specialty..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
 
-      <div className="grid grid-3" style={{ marginTop: 14 }}>
-        {docs.map(doc => (
-          <div className="card" key={doc._id}>
-            <h3 style={{ marginTop: 0 }}>{doc.name}</h3>
-            <p style={{ margin: "6px 0", color: "var(--muted)" }}>{doc.specialization}</p>
-            <p style={{ margin: "6px 0" }}><span className="badge">{doc.availableStatus}</span></p>
-            <p style={{ color: "var(--muted)" }}>{doc.location}</p>
-            <p><b>Next:</b> {doc.nextSlot}</p>
-            <a className="btn btn-primary" href={`/doctor/${doc._id}`}>View Profile</a>
+            <div className="field">
+              <label>Department</label>
+              <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+                <option value="">All Departments</option>
+                {departmentOptions.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field">
+              <label>&nbsp;</label>
+              <button className="btn btn-primary" style={{ width: "100%", height: 40 }} onClick={onSearch}>
+                🔍 Search
+              </button>
+            </div>
           </div>
-        ))}
+        </div>
+
+        {/* showing + sort */}
+        <div className="inline-row">
+          <div>Showing <b>{loading ? "..." : doctors.length}</b> doctors</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span>Sort by:</span>
+            <select value={sort} onChange={(e) => { setSort(e.target.value); fetchAll({ sort: e.target.value }); }}>
+              <option value="recommended">Recommended</option>
+              <option value="rating">Highest Rating</option>
+              <option value="experience">Most Experience</option>
+            </select>
+          </div>
+        </div>
+
+        {/* doctor grid */}
+        {loading && <p className="page-subtitle" style={{ marginTop: 16 }}>Loading doctors...</p>}
+
+        {!loading && doctors.length === 0 && (
+          <div className="card" style={{ padding: 16, marginTop: 16 }}>
+            <p style={{ margin: 0, color: "#334155" }}>
+              No doctors found. Run seed again:
+              <b> POST http://localhost:5000/api/seed</b>
+            </p>
+          </div>
+        )}
+
+        <div className="doctor-grid">
+          {doctors.map((doc) => (
+            <div className="doc-card" key={doc._id}>
+              <div className="doc-avatar">
+                <img
+                  src={doc.imageUrl || "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop"}
+                  alt={doc.name}
+                />
+              </div>
+
+              <p className="doc-name">{doc.name}</p>
+              <div className="doc-spec">{doc.specialization}</div>
+
+              <div className="rating-row">
+                <div className="stars">{starsText(doc.rating)}</div>
+                <div className="reviews">({doc.reviews || 0})</div>
+              </div>
+
+              <p className="doc-meta">{doc.experienceYears || 0} years experience</p>
+
+              <div className="doc-lines">
+                <div className="doc-line">
+                  <div className="ico" style={{ color: "#16a34a" }}>📅</div>
+                  <div>{doc.availableStatus}</div>
+                </div>
+                <div className="doc-line">
+                  <div className="ico" style={{ color: "#2563eb" }}>⏰</div>
+                  <div>Next: {doc.nextSlot}</div>
+                </div>
+                <div className="doc-line">
+                  <div className="ico" style={{ color: "#ef4444" }}>📍</div>
+                  <div>{doc.location}</div>
+                </div>
+              </div>
+
+              <button className="doc-btn" onClick={() => nav(`/doctors/${doc._id}`)}>
+                Book Appointment
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

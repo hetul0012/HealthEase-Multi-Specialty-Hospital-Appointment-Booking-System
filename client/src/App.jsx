@@ -90,7 +90,8 @@ export default function App() {
               </DoctorRoute>
             }
           />
-
+          <Route path="/doctors/:id" element={<DoctorDetails />} />
+          
           {/* ===== ADMIN (ADMIN ONLY) ===== */}
           <Route
             path="/admin"
