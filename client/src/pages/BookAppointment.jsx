@@ -13,7 +13,7 @@ function fmtDate(d) {
 }
 
 export default function BookAppointment() {
-  const { doctorId } = useParams(); // matches App.jsx /book/:doctorId
+  const { doctorId } = useParams(); // matches route /book/:doctorId
   const nav = useNavigate();
 
   const [doctor, setDoctor] = useState(null);
@@ -22,10 +22,10 @@ export default function BookAppointment() {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [reason, setReason] = useState("Follow-up Visit");
+  const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
-  // patient form
+  // patient form (keep your UI)
   const [patientName, setPatientName] = useState("");
   const [patientEmail, setPatientEmail] = useState("");
   const [patientPhone, setPatientPhone] = useState("");
@@ -33,15 +33,14 @@ export default function BookAppointment() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Load doctor
+  //  load doctor (fix endpoint)
   useEffect(() => {
     api
-      .get(`/doctors/${doctorId}`) //  NO /api here
+      .get(`/doctors/${doctorId}`)
       .then((res) => setDoctor(res.data))
       .catch(() => setDoctor(null));
   }, [doctorId]);
 
-  // calendar days
   const calDays = useMemo(() => {
     const y = month.getFullYear();
     const m = month.getMonth();
@@ -58,17 +57,7 @@ export default function BookAppointment() {
     return month.toLocaleString("en-US", { month: "long", year: "numeric" });
   }, [month]);
 
-  const times = [
-    "09:00 AM",
-    "10:00 AM",
-    "11:00 AM",
-    "12:00 PM",
-    "02:00 PM",
-    "03:00 PM",
-    "04:00 PM",
-    "05:00 PM",
-  ];
-
+  const times = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
   const reasons = ["General Checkup", "Follow-up Visit", "Consultation", "Lab Tests", "Other"];
 
   const canConfirm =
@@ -81,6 +70,7 @@ export default function BookAppointment() {
 
   const onConfirm = async () => {
     setMessage("");
+
     if (!canConfirm) {
       setMessage("Please complete all required fields.");
       return;
@@ -89,20 +79,20 @@ export default function BookAppointment() {
     try {
       setSaving(true);
 
-      //  This matches backend expectation (recommended)
+      //  FIX endpoint + payload
       await api.post("/appointments", {
-        doctorId,
-        patientName,
-        patientEmail,
-        patientPhone,
+        doctorId, // backend should use this
         date: selectedDate,
         time: selectedTime,
         reason,
         notes,
+        patientName,
+        patientEmail,
+        patientPhone,
       });
 
-      setMessage(" Appointment confirmed!");
-      setTimeout(() => nav("/appointments"), 700);
+      setMessage("Appointment confirmed! You will receive a confirmation email.");
+      setTimeout(() => nav("/appointments"), 800);
     } catch (e) {
       const msg =
         e?.response?.data?.message ||
@@ -124,7 +114,7 @@ export default function BookAppointment() {
           <div className="card book-card">
             {/* Date */}
             <div className="section-block">
-              <p className="section-label"> Select Date</p>
+              <p className="section-label">Select Date</p>
 
               <div className="calendar">
                 <div className="cal-head">
@@ -135,9 +125,7 @@ export default function BookAppointment() {
                   >
                     ‹
                   </button>
-
                   <div>{monthLabel}</div>
-
                   <button
                     className="cal-nav"
                     onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
@@ -160,7 +148,6 @@ export default function BookAppointment() {
                     if (!d) return <div key={idx} />;
                     const value = fmtDate(d);
                     const active = value === selectedDate;
-
                     return (
                       <div
                         key={value}
@@ -215,7 +202,7 @@ export default function BookAppointment() {
               </div>
             </div>
 
-            {/* Patient */}
+            {/* Patient info */}
             <div className="section-block">
               <p className="section-label">👤 Patient Details</p>
 
@@ -224,12 +211,10 @@ export default function BookAppointment() {
                   <label>Full Name</label>
                   <input className="input" value={patientName} onChange={(e) => setPatientName(e.target.value)} />
                 </div>
-
                 <div className="field">
                   <label>Phone</label>
                   <input className="input" value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} />
                 </div>
-
                 <div className="field" style={{ gridColumn: "1 / -1" }}>
                   <label>Email</label>
                   <input className="input" value={patientEmail} onChange={(e) => setPatientEmail(e.target.value)} />

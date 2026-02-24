@@ -11,7 +11,6 @@ export default function FindDoctors() {
   const nav = useNavigate();
   const [params] = useSearchParams();
 
-  // read query params coming from Home search
   const initialQ = params.get("q") || "";
   const initialDept = params.get("departmentId") || "";
   const initialSort = params.get("sort") || "recommended";
@@ -27,25 +26,23 @@ export default function FindDoctors() {
   const fetchAll = async (override = {}) => {
     setLoading(true);
     try {
-      //  FIX: must be /api/departments
-      const deptRes = await api.get("/api/departments");
+      //  no "/api" here
+      const deptRes = await api.get("/departments");
       setDepartments(deptRes.data || []);
 
       const query = new URLSearchParams();
+      const qVal = (override.q ?? q).trim();
+      const deptVal = override.departmentId ?? departmentId;
+      const sortVal = override.sort ?? sort;
 
-      const finalQ = (override.q ?? q).trim();
-      const finalDept = override.departmentId ?? departmentId;
-      const finalSort = override.sort ?? sort;
+      if (qVal) query.set("q", qVal);
+      if (deptVal) query.set("departmentId", deptVal);
+      if (sortVal) query.set("sort", sortVal);
 
-      if (finalQ) query.set("q", finalQ);
-      if (finalDept) query.set("departmentId", finalDept);
-      if (finalSort) query.set("sort", finalSort);
-
-      //  Keep consistent: /api/doctors
-      const docRes = await api.get(`/api/doctors?${query.toString()}`);
+      //  no "/api" here
+      const docRes = await api.get(`/doctors?${query.toString()}`);
       setDoctors(docRes.data || []);
     } catch (e) {
-      console.error("FindDoctors fetch error:", e);
       setDepartments([]);
       setDoctors([]);
     } finally {
@@ -55,24 +52,19 @@ export default function FindDoctors() {
 
   useEffect(() => {
     fetchAll();
-    // eslint-disable-next-line
+  
   }, []);
 
   const departmentOptions = useMemo(() => departments, [departments]);
 
-  const onSearch = () => {
-    fetchAll({ q, departmentId, sort });
-  };
+  const onSearch = () => fetchAll({ q, departmentId, sort });
 
   return (
     <div className="page">
       <div className="container" style={{ padding: "28px 18px" }}>
         <h1 className="page-title">Find Your Doctor</h1>
-        <p className="page-subtitle">
-          Browse our network of experienced healthcare professionals
-        </p>
+        <p className="page-subtitle">Browse our network of experienced healthcare professionals</p>
 
-        {/* Filter Card */}
         <div className="card filter-card">
           <div className="filter-grid">
             <div className="field">
@@ -87,10 +79,7 @@ export default function FindDoctors() {
 
             <div className="field">
               <label>Department</label>
-              <select
-                value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
-              >
+              <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
                 <option value="">All Departments</option>
                 {departmentOptions.map((d) => (
                   <option key={d._id} value={d._id}>
@@ -102,19 +91,13 @@ export default function FindDoctors() {
 
             <div className="field">
               <label>&nbsp;</label>
-              <button
-                className="btn btn-primary"
-                style={{ width: "100%", height: 40 }}
-                onClick={onSearch}
-                type="button"
-              >
+              <button className="btn btn-primary" style={{ width: "100%", height: 40 }} onClick={onSearch}>
                  Search
               </button>
             </div>
           </div>
         </div>
 
-        {/* showing + sort */}
         <div className="inline-row">
           <div>
             Showing <b>{loading ? "..." : doctors.length}</b> doctors
@@ -136,12 +119,7 @@ export default function FindDoctors() {
           </div>
         </div>
 
-        {/* doctor grid */}
-        {loading && (
-          <p className="page-subtitle" style={{ marginTop: 16 }}>
-            Loading doctors...
-          </p>
-        )}
+        {loading && <p className="page-subtitle" style={{ marginTop: 16 }}>Loading doctors...</p>}
 
         {!loading && doctors.length === 0 && (
           <div className="card" style={{ padding: 16, marginTop: 16 }}>
@@ -173,37 +151,25 @@ export default function FindDoctors() {
                 <div className="reviews">({doc.reviews || 0})</div>
               </div>
 
-              <p className="doc-meta">
-                {doc.experienceYears || 0} years experience
-              </p>
+              <p className="doc-meta">{doc.experienceYears || 0} years experience</p>
 
               <div className="doc-lines">
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#16a34a" }}>
-                    
-                  </div>
+                  <div className="ico" style={{ color: "#16a34a" }}>📅</div>
                   <div>{doc.availableStatus}</div>
                 </div>
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#2563eb" }}>
-                    
-                  </div>
+                  <div className="ico" style={{ color: "#2563eb" }}>⏰</div>
                   <div>Next: {doc.nextSlot}</div>
                 </div>
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#ef4444" }}>
-                    
-                  </div>
+                  <div className="ico" style={{ color: "#ef4444" }}>📍</div>
                   <div>{doc.location}</div>
                 </div>
               </div>
 
-              {/* IMPORTANT: route must match App.jsx => /book/:doctorId */}
-              <button
-                className="doc-btn"
-                onClick={() => nav(`/book/${doc._id}`)}
-                type="button"
-              >
+              {/* matches App.jsx /book/:doctorId */}
+              <button className="doc-btn" onClick={() => nav(`/book/${doc._id}`)}>
                 Book Appointment
               </button>
             </div>
