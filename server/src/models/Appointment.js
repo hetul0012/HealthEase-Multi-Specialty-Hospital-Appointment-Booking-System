@@ -4,19 +4,20 @@ const appointmentSchema = new mongoose.Schema(
   {
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
-    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
+    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
 
-    date: { type: String, required: true }, // "2026-01-30"
-    time: { type: String, required: true }, // "10:30 AM"
-    type: { type: String, default: "Consultation" },
+    date: { type: String, required: true },     // "2026-02-11"
+    time: { type: String, required: true },     // "09:00 AM"
+    reason: { type: String, required: true },   // "Follow-up Visit"
+    notes: { type: String, default: "" },
 
-    reason: { type: String, default: "" },
-    status: { type: String, enum: ["Pending", "Confirmed", "Completed", "Cancelled"], default: "Pending" }
+    status: {
+      type: String,
+      enum: ["Booked", "Cancelled", "Completed"],
+      default: "Booked",
+    },
   },
   { timestamps: true }
 );
-
-// avoid same slot booking for same doctor
-appointmentSchema.index({ doctor: 1, date: 1, time: 1 }, { unique: true });
 
 module.exports = mongoose.model("Appointment", appointmentSchema);

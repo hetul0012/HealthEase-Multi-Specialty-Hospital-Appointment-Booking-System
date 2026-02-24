@@ -43,17 +43,18 @@ export default function App() {
         <Navbar />
 
         <Routes>
-          {/* ===== PUBLIC ===== */}
+          {/* ================= PUBLIC ================= */}
           <Route path="/" element={<Home />} />
           <Route path="/find-doctors" element={<FindDoctors />} />
           <Route path="/doctor/:id" element={<DoctorDetails />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
 
+          {/* ================= AUTH ================= */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ===== PATIENT (PROTECTED) ===== */}
+          {/* ================= PATIENT (PROTECTED) ================= */}
           <Route
             path="/book/:doctorId"
             element={
@@ -81,7 +82,7 @@ export default function App() {
             }
           />
 
-          {/* ===== DOCTOR (DOCTOR ONLY) ===== */}
+          {/* ================= DOCTOR ================= */}
           <Route
             path="/doctor"
             element={
@@ -90,9 +91,8 @@ export default function App() {
               </DoctorRoute>
             }
           />
-          <Route path="/doctors/:id" element={<DoctorDetails />} />
-          
-          {/* ===== ADMIN (ADMIN ONLY) ===== */}
+
+          {/* ================= ADMIN ================= */}
           <Route
             path="/admin"
             element={
@@ -108,7 +108,7 @@ export default function App() {
             <Route path="appointments" element={<AdminAppointments />} />
           </Route>
 
-          {/* ===== FALLBACK ===== */}
+          {/* ================= FALLBACK ================= */}
           <Route path="*" element={<Home />} />
         </Routes>
       </BrowserRouter>

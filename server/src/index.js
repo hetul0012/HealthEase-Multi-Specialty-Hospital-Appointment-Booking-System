@@ -7,21 +7,35 @@ const connectDB = require("./config/db");
 // Models
 const Department = require("./models/Department");
 const Doctor = require("./models/Doctor");
+const User = require("./models/User");
+
+// Auth routes
+const authRoutes = require("./routes/authRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
+
+// For admin seed password
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/api/appointments", appointmentRoutes);
 
-// Test route
+//  Test route
 app.get("/", (req, res) => {
   res.send("HealthEase API is running...");
 });
 
-/**
- * PUBLIC: GET departments
- */
+
+//  Auth
+app.use("/api/auth", authRoutes);
+
+// Appointment routes
+app.use("/api/appointments", require("./routes/appointmentRoutes"));
+
+// Get all departments (public)
 app.get("/api/departments", async (req, res) => {
   try {
     const departments = await Department.find().sort({ name: 1 });
@@ -31,41 +45,33 @@ app.get("/api/departments", async (req, res) => {
   }
 });
 
-/**
- *  PUBLIC: GET doctors
- * /api/doctors?q=&departmentId=&sort=recommended|rating|experience
- */
+//  Get all doctors (public)
+
 app.get("/api/doctors", async (req, res) => {
   try {
-    const { q, departmentId, sort } = req.query;
+    const { departmentId, q } = req.query;
 
-    const filter = { status: "Active" };
-
+    const filter = {};
     if (departmentId) filter.department = departmentId;
 
-    if (q && q.trim()) {
+    if (q) {
       filter.$or = [
-        { name: { $regex: q.trim(), $options: "i" } },
-        { specialization: { $regex: q.trim(), $options: "i" } },
+        { name: { $regex: q, $options: "i" } },
+        { specialization: { $regex: q, $options: "i" } },
       ];
     }
 
-    let query = Doctor.find(filter).populate("department", "name");
+    const doctors = await Doctor.find(filter)
+      .populate("department", "name")
+      .sort({ name: 1 });
 
-    if (sort === "rating") query = query.sort({ rating: -1, reviews: -1 });
-    else if (sort === "experience") query = query.sort({ experienceYears: -1 });
-    else query = query.sort({ createdAt: -1 }); // recommended
-
-    const doctors = await query;
     res.json(doctors);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-/**
- * PUBLIC: GET single doctor
- */
+//  Get single doctor by ID (public)
 app.get("/api/doctors/:id", async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id).populate("department", "name");
@@ -76,52 +82,27 @@ app.get("/api/doctors/:id", async (req, res) => {
   }
 });
 
-/**
- * Inserts departments + doctors (run once)
- */
+
+// Seed departments + doctors + admin user
 app.post("/api/seed", async (req, res) => {
   try {
-    // clear old
-    await Doctor.deleteMany({});
+    // 1) Clear old data
     await Department.deleteMany({});
+    await Doctor.deleteMany({});
 
-    // insert departments
+    // 2) Insert departments
     const departments = await Department.insertMany([
-      {
-        name: "Cardiology",
-        description:
-          "Expert heart care with state-of-the-art diagnostic and treatment facilities.",
-      },
-      {
-        name: "Neurology",
-        description:
-          "Advanced neurological care for brain and nervous system disorders.",
-      },
-      {
-        name: "Orthopedics",
-        description:
-          "Comprehensive bone and joint care with minimally invasive procedures.",
-      },
-      {
-        name: "Pulmonology",
-        description:
-          "Specialized respiratory care for lung and breathing disorders.",
-      },
-      {
-        name: "Ophthalmology",
-        description:
-          "Complete eye care services from routine exams to complex surgeries.",
-      },
-      {
-        name: "Pediatrics",
-        description:
-          "Dedicated healthcare for children from infancy through adolescence.",
-      },
+      { name: "Cardiology", description: "Heart and cardiovascular care" },
+      { name: "Neurology", description: "Brain and nervous system care" },
+      { name: "Orthopedics", description: "Bones, joints, and muscle care" },
+      { name: "Pulmonology", description: "Lungs and respiratory care" },
+      { name: "Ophthalmology", description: "Eye care and vision services" },
+      { name: "Pediatrics", description: "Healthcare for infants and children" },
     ]);
 
     const deptId = (name) => departments.find((d) => d.name === name)._id;
 
-    // insert doctors
+    // 3) Insert doctors
     const doctors = await Doctor.insertMany([
       {
         name: "Dr. Sarah Johnson",
@@ -203,24 +184,41 @@ app.post("/api/seed", async (req, res) => {
       },
     ]);
 
-    return res.status(201).json({
-      message: "Seed success",
+    // 4)  CREATE ADMIN USER (only if not exists)
+    const adminEmail = "admin@healthease.com";
+    const adminExists = await User.findOne({ email: adminEmail });
+
+    if (!adminExists) {
+      const passwordHash = await bcrypt.hash("admin123", 10);
+
+      await User.create({
+        name: "Admin",
+        email: adminEmail,
+        passwordHash,
+        role: "admin",
+      });
+    }
+
+    // 5) Return response
+    res.status(201).json({
+      message: "Seed success (Departments + Doctors + Admin created)",
       departmentsCount: departments.length,
       doctorsCount: doctors.length,
+      adminLogin: {
+        email: adminEmail,
+        password: "admin123",
+      },
     });
   } catch (err) {
-    return res.status(500).json({ message: "Seed failed", error: err.message });
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Start server AFTER DB connected
+//Server
+
 const PORT = process.env.PORT || 5000;
 
-connectDB()
-  .then(() => {
-    app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("DB connection failed:", err.message);
-    process.exit(1);
-  });
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});

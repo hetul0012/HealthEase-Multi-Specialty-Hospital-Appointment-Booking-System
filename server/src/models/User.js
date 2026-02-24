@@ -4,37 +4,18 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
 
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true
-    },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
 
-    password: { type: String, required: true, minlength: 6 },
+    passwordHash: { type: String, required: true },
 
     role: {
       type: String,
-      enum: ["patient", "doctor", "admin"],
-      default: "patient"
+      enum: ["patient", "admin", "doctor"],
+      default: "patient",
     },
 
-    // link a login user to a Doctor profile (only for role="doctor")
-    doctorProfile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Doctor",
-      default: null
-    },
-
-    // patient fields (simple)
-    phone: { type: String, default: "" },
-
-    status: {
-      type: String,
-      enum: ["Active", "Inactive"],
-      default: "Active"
-    }
+    // optional link if user is a doctor account
+    doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
   },
   { timestamps: true }
 );

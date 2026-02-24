@@ -27,17 +27,25 @@ export default function FindDoctors() {
   const fetchAll = async (override = {}) => {
     setLoading(true);
     try {
+      //  FIX: must be /api/departments
       const deptRes = await api.get("/api/departments");
-      setDepartments(deptRes.data);
+      setDepartments(deptRes.data || []);
 
       const query = new URLSearchParams();
-      if ((override.q ?? q).trim()) query.set("q", (override.q ?? q).trim());
-      if (override.departmentId ?? departmentId) query.set("departmentId", override.departmentId ?? departmentId);
-      if (override.sort ?? sort) query.set("sort", override.sort ?? sort);
 
+      const finalQ = (override.q ?? q).trim();
+      const finalDept = override.departmentId ?? departmentId;
+      const finalSort = override.sort ?? sort;
+
+      if (finalQ) query.set("q", finalQ);
+      if (finalDept) query.set("departmentId", finalDept);
+      if (finalSort) query.set("sort", finalSort);
+
+      //  Keep consistent: /api/doctors
       const docRes = await api.get(`/api/doctors?${query.toString()}`);
-      setDoctors(docRes.data);
+      setDoctors(docRes.data || []);
     } catch (e) {
+      console.error("FindDoctors fetch error:", e);
       setDepartments([]);
       setDoctors([]);
     } finally {
@@ -60,7 +68,9 @@ export default function FindDoctors() {
     <div className="page">
       <div className="container" style={{ padding: "28px 18px" }}>
         <h1 className="page-title">Find Your Doctor</h1>
-        <p className="page-subtitle">Browse our network of experienced healthcare professionals</p>
+        <p className="page-subtitle">
+          Browse our network of experienced healthcare professionals
+        </p>
 
         {/* Filter Card */}
         <div className="card filter-card">
@@ -77,7 +87,10 @@ export default function FindDoctors() {
 
             <div className="field">
               <label>Department</label>
-              <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+              <select
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+              >
                 <option value="">All Departments</option>
                 {departmentOptions.map((d) => (
                   <option key={d._id} value={d._id}>
@@ -89,8 +102,13 @@ export default function FindDoctors() {
 
             <div className="field">
               <label>&nbsp;</label>
-              <button className="btn btn-primary" style={{ width: "100%", height: 40 }} onClick={onSearch}>
-                🔍 Search
+              <button
+                className="btn btn-primary"
+                style={{ width: "100%", height: 40 }}
+                onClick={onSearch}
+                type="button"
+              >
+                 Search
               </button>
             </div>
           </div>
@@ -98,11 +116,19 @@ export default function FindDoctors() {
 
         {/* showing + sort */}
         <div className="inline-row">
-          <div>Showing <b>{loading ? "..." : doctors.length}</b> doctors</div>
+          <div>
+            Showing <b>{loading ? "..." : doctors.length}</b> doctors
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span>Sort by:</span>
-            <select value={sort} onChange={(e) => { setSort(e.target.value); fetchAll({ sort: e.target.value }); }}>
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                fetchAll({ sort: e.target.value });
+              }}
+            >
               <option value="recommended">Recommended</option>
               <option value="rating">Highest Rating</option>
               <option value="experience">Most Experience</option>
@@ -111,7 +137,11 @@ export default function FindDoctors() {
         </div>
 
         {/* doctor grid */}
-        {loading && <p className="page-subtitle" style={{ marginTop: 16 }}>Loading doctors...</p>}
+        {loading && (
+          <p className="page-subtitle" style={{ marginTop: 16 }}>
+            Loading doctors...
+          </p>
+        )}
 
         {!loading && doctors.length === 0 && (
           <div className="card" style={{ padding: 16, marginTop: 16 }}>
@@ -127,7 +157,10 @@ export default function FindDoctors() {
             <div className="doc-card" key={doc._id}>
               <div className="doc-avatar">
                 <img
-                  src={doc.imageUrl || "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop"}
+                  src={
+                    doc.imageUrl ||
+                    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop"
+                  }
                   alt={doc.name}
                 />
               </div>
@@ -140,24 +173,37 @@ export default function FindDoctors() {
                 <div className="reviews">({doc.reviews || 0})</div>
               </div>
 
-              <p className="doc-meta">{doc.experienceYears || 0} years experience</p>
+              <p className="doc-meta">
+                {doc.experienceYears || 0} years experience
+              </p>
 
               <div className="doc-lines">
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#16a34a" }}>📅</div>
+                  <div className="ico" style={{ color: "#16a34a" }}>
+                    
+                  </div>
                   <div>{doc.availableStatus}</div>
                 </div>
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#2563eb" }}>⏰</div>
+                  <div className="ico" style={{ color: "#2563eb" }}>
+                    
+                  </div>
                   <div>Next: {doc.nextSlot}</div>
                 </div>
                 <div className="doc-line">
-                  <div className="ico" style={{ color: "#ef4444" }}>📍</div>
+                  <div className="ico" style={{ color: "#ef4444" }}>
+                    
+                  </div>
                   <div>{doc.location}</div>
                 </div>
               </div>
 
-              <button className="doc-btn" onClick={() => nav(`/doctors/${doc._id}`)}>
+              {/* IMPORTANT: route must match App.jsx => /book/:doctorId */}
+              <button
+                className="doc-btn"
+                onClick={() => nav(`/book/${doc._id}`)}
+                type="button"
+              >
                 Book Appointment
               </button>
             </div>
