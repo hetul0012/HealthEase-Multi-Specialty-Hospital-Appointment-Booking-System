@@ -2,17 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/api";
 
-// Put your hero image in: client/src/assets/hero.jpg
 import heroImg from "../assets/hero.png";
 
 const iconPalette = [
-  { bg: "#e8f0ff", color: "#2f6bff", emoji: "💙" }, // Cardiology
-  { bg: "#e9fff2", color: "#16a34a", emoji: "🧠" }, // Neurology
-  { bg: "#f2ecff", color: "#7c3aed", emoji: "🦴" }, // Ortho
-  { bg: "#ffecec", color: "#ef4444", emoji: "🫁" }, // Pulmonology
-  { bg: "#fff8db", color: "#f59e0b", emoji: "👁️" }, // Eye
-  { bg: "#eef2ff", color: "#6366f1", emoji: "🧒" }  // Pediatrics
-];  
+  { bg: "#e8f0ff", color: "#2f6bff", icon: "fa-solid fa-heart-pulse" },
+  { bg: "#e9fff2", color: "#16a34a", icon: "fa-solid fa-brain" },
+  { bg: "#f2ecff", color: "#7c3aed", icon: "fa-solid fa-bone" },
+  { bg: "#ffecec", color: "#ef4444", icon: "fa-solid fa-lungs" },
+  { bg: "#fff8db", color: "#f59e0b", icon: "fa-solid fa-eye" },
+  { bg: "#eef2ff", color: "#6366f1", icon: "fa-solid fa-child" }
+];
 
 const testimonials = [
   {
@@ -57,20 +56,19 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/departments")
+    api.get("/departments")
       .then((r) => setDepts(r.data))
       .catch(() => setDepts([]))
       .finally(() => setLoading(false));
   }, []);
 
   const specialties = useMemo(() => {
-    // If you want specialties from doctors later, we can fetch /api/doctors and extract unique.
-    // For now (to match Figma), show a small list:
+   
     return ["Select specialty", "Cardiology", "Neurology", "Orthopedics", "Pulmonology", "Ophthalmology", "Pediatrics"];
   }, []);
 
   const onSearch = () => {
-    // send search info to Find Doctors page using query params
+
     const q = doctorName.trim();
     const sp = specialty && specialty !== "Select specialty" ? specialty : "";
     const av = availability !== "Any time" ? availability : "";
@@ -146,9 +144,10 @@ export default function Home() {
             </div>
 
             <div className="search-btn-wrap">
-              <button className="btn btn-primary" onClick={onSearch}>
-                🔍&nbsp; Search Doctors
-              </button>
+            <button className="btn btn-primary" onClick={onSearch}>
+               <i className="fa-solid fa-magnifying-glass" style={{ marginRight: 8 }}></i>
+                 Search Doctors
+            </button>
             </div>
           </div>
         </div>
@@ -178,9 +177,9 @@ export default function Home() {
               const style = iconPalette[idx % iconPalette.length];
               return (
                 <div className="dept-card" key={d._id}>
-                  <div className="dept-icon" style={{ background: style.bg, color: style.color }}>
-                    {style.emoji}
-                  </div>
+                <div className="dept-icon" style={{ background: style.bg, color: style.color }}>
+                  <i className={style.icon}></i>
+                </div>
                   <p className="dept-name">{d.name}</p>
                   <p className="dept-desc">{d.description}</p>
                 </div>
@@ -243,7 +242,7 @@ export default function Home() {
           <div className="footer-grid">
             <div>
               <div className="brand" style={{ color: "white" }}>
-                <span className="brand-badge" style={{ background: "rgba(255,255,255,0.08)", color: "#cfe0ff" }}>💙</span>
+              <span className="brand-badge"><i className="fa-solid fa-heart-pulse"></i></span>
                 HealthEase
               </div>
               <p>Providing exceptional healthcare services with compassion and expertise.</p>
@@ -270,7 +269,7 @@ export default function Home() {
               <p>Stay updated with our latest health tips and news.</p>
               <div className="news-row">
                 <input placeholder="Your email" />
-                <button title="Send">➤</button>
+                <button title="Send"><i className="fa-solid fa-paper-plane"></i></button>
               </div>
             </div>
           </div>

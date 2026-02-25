@@ -25,8 +25,29 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // use this when profile updates (name/email/phone)
+  const updateUser = (partialUser) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...(partialUser || {}) };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoggedIn: !!token }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isLoggedIn: !!token,
+
+       
+        setUser,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

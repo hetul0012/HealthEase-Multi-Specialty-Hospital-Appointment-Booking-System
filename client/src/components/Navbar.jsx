@@ -10,7 +10,10 @@ export default function Navbar() {
       <div className="container">
         <div className="nav-inner">
           <Link className="brand" to="/">
-            <span className="brand-badge">💙</span>
+          
+            <span className="brand-badge">
+              <i className="fa-solid fa-heart-pulse"></i>
+            </span>
             HealthEase
           </Link>
 
@@ -44,6 +47,7 @@ export default function Navbar() {
               {user.role === "patient" && <Link className="btn" to="/patient">Patient</Link>}
               {user.role === "doctor" && <Link className="btn" to="/doctor">Doctor</Link>}
               {user.role === "admin" && <Link className="btn" to="/admin">Admin</Link>}
+
               <button
                 className="btn"
                 onClick={() => {

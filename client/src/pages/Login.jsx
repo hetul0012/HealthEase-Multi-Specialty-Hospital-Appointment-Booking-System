@@ -22,6 +22,7 @@ export default function Login() {
       setErr("Please enter email and password.");
       return;
     }
+
     if (!agree) {
       setErr("Please agree to Terms & Privacy Policy.");
       return;
@@ -30,17 +31,15 @@ export default function Login() {
     try {
       setLoading(true);
 
-     
       const res = await api.post("/auth/login", { email, password });
 
-      // expected: { token, user }
       login(res.data);
 
-      
       const role = res.data?.user?.role;
       if (role === "admin") nav("/admin");
       else if (role === "doctor") nav("/doctor");
       else nav("/appointments");
+
     } catch (e2) {
       setErr(e2?.response?.data?.message || "Login failed");
     } finally {
@@ -50,78 +49,73 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <div className="auth-wrap">
-        <div className="auth-illustration">
-          <div className="auth-illu-inner">
-            <img
-              src="https://illustrations.popsy.co/blue/doctors.svg"
-              alt="Healthcare Illustration"
-              className="auth-illu-img"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          </div>
-        </div>
+      <div className="auth-center">
+        <div className="auth-card">
+          <h2 className="auth-title">Sign In</h2>
 
-        <div className="auth-formSide">
-          <div className="auth-card">
-            <h2 className="auth-title">Sign in</h2>
-
-            <form onSubmit={onSubmit}>
-              <div className="auth-field">
-                <label>Email Address</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">✉️</span>
-                  <input
-                    className="auth-input"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+          <form onSubmit={onSubmit}>
+         
+            <div className="auth-field">
+              <label>Email Address</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-envelope auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-field">
-                <label>Password</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">🔒</span>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
+           
+            <div className="auth-field">
+              <label>Password</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-lock auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-row">
-                <label className="auth-check">
-                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-                  <span>
-                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-                  </span>
-                </label>
-              </div>
+          
+            <div className="auth-row">
+              <label className="auth-check">
+                <input
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                />
+                <span>
+                  I agree to the <a href="#">Terms of Service</a> and{" "}
+                  <a href="#">Privacy Policy</a>
+                </span>
+              </label>
+            </div>
 
-              {err && <div className="auth-error">{err}</div>}
+            {err && <div className="auth-error">{err}</div>}
 
-              <button className="auth-primaryBtn" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
-              </button>
+            <button className="auth-primaryBtn" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
 
-              <div className="auth-alt">
-                Don’t have an account?{" "}
-                <Link to="/register" className="auth-link">
-                  Create one
-                </Link>
-              </div>
+            <div className="auth-alt">
+              Don’t have an account?{" "}
+              <Link to="/register" className="auth-link">
+                Create one
+              </Link>
+            </div>
 
-              <div style={{ marginTop: 12, fontSize: 14, color: "#475569" }}>
-                Admin demo: <b>admin@healthease.com</b> / <b>admin123</b>
-              </div>
-            </form>
-          </div>
+            <div className="auth-demo">
+              Admin demo: <b>admin@healthease.com</b> / <b>admin123</b>
+            </div>
+          </form>
         </div>
       </div>
     </div>

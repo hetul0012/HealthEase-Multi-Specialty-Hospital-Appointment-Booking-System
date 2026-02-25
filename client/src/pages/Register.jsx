@@ -39,7 +39,7 @@ export default function Register() {
         password,
       });
 
-      // If backend returns token+user, auto login:
+      // auto login if backend returns token+user
       if (res?.data?.token && res?.data?.user) {
         login(res.data);
         nav("/appointments");
@@ -55,102 +55,99 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <div className="auth-wrap">
-        <div className="auth-illustration">
-          <div className="auth-illu-inner">
-            <img
-              src="https://illustrations.popsy.co/blue/doctors.svg"
-              alt="Healthcare Illustration"
-              className="auth-illu-img"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          </div>
-        </div>
+      <div className="auth-center">
+        <div className="auth-card">
+          <h2 className="auth-title">Create Account</h2>
 
-        <div className="auth-formSide">
-          <div className="auth-card">
-            <h2 className="auth-title">Create account</h2>
-
-            <form onSubmit={onSubmit}>
-              <div className="auth-field">
-                <label>Full Name</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">👤</span>
-                  <input
-                    className="auth-input"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
+          <form onSubmit={onSubmit}>
+            {/* FULL NAME */}
+            <div className="auth-field">
+              <label>Full Name</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-user auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-field">
-                <label>Email Address</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">✉️</span>
-                  <input
-                    className="auth-input"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+            {/* EMAIL */}
+            <div className="auth-field">
+              <label>Email Address</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-envelope auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-field">
-                <label>Phone Number</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">📞</span>
-                  <input
-                    className="auth-input"
-                    type="text"
-                    placeholder="Enter your phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
+            {/* PHONE */}
+            <div className="auth-field">
+              <label>Phone Number</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-phone auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="text"
+                  placeholder="Enter your phone number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-field">
-                <label>Password</label>
-                <div className="auth-inputWrap">
-                  <span className="auth-icon">🔒</span>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
+            {/* PASSWORD */}
+            <div className="auth-field">
+              <label>Password</label>
+              <div className="auth-inputWrap">
+                <i className="fa-solid fa-lock auth-fa-icon"></i>
+                <input
+                  className="auth-input"
+                  type="password"
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
+            </div>
 
-              <div className="auth-row">
-                <label className="auth-check">
-                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-                  <span>
-                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-                  </span>
-                </label>
-              </div>
+            {/* TERMS */}
+            <div className="auth-row">
+              <label className="auth-check">
+                <input
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                />
+                <span>
+                  I agree to the <a href="#">Terms of Service</a> and{" "}
+                  <a href="#">Privacy Policy</a>
+                </span>
+              </label>
+            </div>
 
-              {err && <div className="auth-error">{err}</div>}
+            {err && <div className="auth-error">{err}</div>}
 
-              <button className="auth-primaryBtn" disabled={loading}>
-                {loading ? "Creating..." : "Create Account"}
-              </button>
+            <button className="auth-primaryBtn" disabled={loading}>
+              {loading ? "Creating..." : "Create Account"}
+            </button>
 
-              <div className="auth-alt">
-                Already have an account?{" "}
-                <Link to="/login" className="auth-link">
-                  Sign in
-                </Link>
-              </div>
-            </form>
-          </div>
+            <div className="auth-alt">
+              Already have an account?{" "}
+              <Link to="/login" className="auth-link">
+                Sign in
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>

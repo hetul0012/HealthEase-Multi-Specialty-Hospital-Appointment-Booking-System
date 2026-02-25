@@ -25,6 +25,7 @@ import Register from "./pages/Register";
 import BookAppointment from "./pages/BookAppointment";
 import MyAppointments from "./pages/MyAppointments";
 import PatientDashboard from "./pages/PatientDashboard";
+import PatientProfile from "./pages/PatientProfile";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -81,7 +82,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/patient/profile"
+            element={
+              <ProtectedRoute>
+                <PatientProfile />
+              </ProtectedRoute>
+            }
+          />
           {/* ================= DOCTOR ================= */}
           <Route
             path="/doctor"

@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
 
 
 //  Auth
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", require("./routes/authRoutes"));
 
 // Appointment routes
 app.use("/api/appointments", require("./routes/appointmentRoutes"));
