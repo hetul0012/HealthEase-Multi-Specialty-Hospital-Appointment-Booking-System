@@ -4,12 +4,12 @@ import api from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 function formatDate(d) {
-  if (!d) return "";
+  if (!d) return "—";
   try {
     const dt = new Date(d);
     return dt.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   } catch {
-    return String(d);
+    return "—";
   }
 }
 
@@ -33,18 +33,20 @@ export default function PatientDashboard() {
       setErr("");
 
       try {
+        // try mine first
         const res = await api.get("/appointments/mine");
         if (!mounted) return;
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } catch (e1) {
         try {
+          // fallback
           const res2 = await api.get("/appointments");
           if (!mounted) return;
           setAppointments(Array.isArray(res2.data) ? res2.data : []);
         } catch (e2) {
           if (!mounted) return;
           setAppointments([]);
-          setErr(e2?.response?.data?.message || "Failed to load dashboard data.");
+          setErr(e2?.response?.data?.message || "Failed to load appointments.");
         }
       } finally {
         if (mounted) setLoading(false);
@@ -52,26 +54,34 @@ export default function PatientDashboard() {
     }
 
     load();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
-  const stats = useMemo(() => {
-    const totalAppointments = appointments.length;
+  const firstName = useMemo(() => {
+    const nm = user?.name || user?.fullName || "Patient";
+    return nm.split(" ")[0] || "Patient";
+  }, [user]);
 
-    const doctorsSet = new Set(
+  const stats = useMemo(() => {
+    const total = appointments.length;
+
+    const doctors = new Set(
       appointments
         .map((a) => a?.doctor?.name || a?.doctorName || a?.doctor)
         .filter(Boolean)
-        .map((x) => x.toString())
+        .map(String)
     );
 
+    const upcomingCount = appointments.filter((a) => {
+      const d = new Date(a?.date || a?.appointmentDate || 0).getTime();
+      return d >= Date.now();
+    }).length;
+
     return {
-      totalAppointments,
-      myDoctors: doctorsSet.size,
-      activePrescriptions: 3,
-      healthScore: 85,
+      totalAppointments: total,
+      upcomingAppointments: upcomingCount,
+      myDoctors: doctors.size,
+      healthScore: 85, // demo
     };
   }, [appointments]);
 
@@ -85,214 +95,175 @@ export default function PatientDashboard() {
     return list.slice(0, 3);
   }, [appointments]);
 
-  const recentActivity = useMemo(() => {
-    const list = [...appointments].slice(-4).reverse();
-
-    return list.map((a) => {
-      const status = a?.status || "Booked";
-      const doctor = a?.doctor?.name || "Doctor";
-      const dept = a?.doctor?.department?.name || a?.department?.name || "Department";
-      const dateText = formatDate(a?.date);
-
-      let label = "Appointment booked";
-      if (safeLower(status).includes("cancel")) label = "Appointment cancelled";
-      if (safeLower(status).includes("complete")) label = "Appointment completed";
-
-      return {
-        title: label,
-        sub: `${doctor} • ${dept}`,
-        time: dateText || "Recently",
-      };
-    });
-  }, [appointments]);
-
-  const firstName = useMemo(() => {
-    const nm = user?.name || user?.fullName || "Patient";
-    return nm.split(" ")[0] || "Patient";
-  }, [user]);
-
   return (
     <div className="page">
       <div className="container" style={{ padding: "22px 18px" }}>
-        <div className="pd-shell">
-          <aside className="pd-sidebar">
-            <div className="pd-brand">
-              <div className="pd-logo">
+        <div className="pd-simple">
+          {/* SIDEBAR */}
+          <aside className="pdS-side">
+            <div className="pdS-brand" onClick={() => nav("/patient")} style={{ cursor: "pointer" }}>
+              <span className="pdS-logo">
                 <i className="fa-solid fa-heart-pulse"></i>
-              </div>
+              </span>
               <div>
-                <div className="pd-brandName">HealthEase</div>
-                <div className="pd-subText">Patient Portal</div>
+                <div className="pdS-name">HealthEase</div>
+                <div className="pdS-sub">Patient Portal</div>
               </div>
             </div>
 
-            <nav className="pd-nav">
-              <button className="pd-navItem active" type="button" onClick={() => nav("/patient")}>
+            <div className="pdS-nav">
+              <button className="pdS-link active" onClick={() => nav("/patient")}>
                 <i className="fa-solid fa-table-columns"></i>
-                <span>Dashboard</span>
+                Dashboard
               </button>
 
-              <button className="pd-navItem" type="button" onClick={() => nav("/appointments")}>
+              <button className="pdS-link" onClick={() => nav("/appointments")}>
                 <i className="fa-regular fa-calendar"></i>
-                <span>Appointments</span>
+                Appointments
               </button>
 
-              <button className="pd-navItem" type="button" onClick={() => nav("/find-doctors")}>
+              <button className="pdS-link" onClick={() => nav("/find-doctors")}>
                 <i className="fa-solid fa-user-doctor"></i>
-                <span>My Doctors</span>
+                Find Doctors
               </button>
 
-              <button className="pd-navItem" type="button" onClick={() => alert("Medical Records (coming soon)")}>
-                <i className="fa-regular fa-folder-open"></i>
-                <span>Medical Records</span>
-              </button>
-
-              <button className="pd-navItem" type="button" onClick={() => alert("Prescriptions (coming soon)")}>
-                <i className="fa-solid fa-pills"></i>
-                <span>Prescriptions</span>
-              </button>
-
-              <button className="pd-navItem" type="button" onClick={() => alert("Health Metrics (coming soon)")}>
-                <i className="fa-solid fa-chart-line"></i>
-                <span>Health Metrics</span>
-              </button>
-
-              <button className="pd-navItem" type="button" onClick={() => alert("Billing (coming soon)")}>
-                <i className="fa-regular fa-credit-card"></i>
-                <span>Billing</span>
-              </button>
-            </nav>
-
-            <div className="pd-sidebarBottom">
-              <button
-                className="pd-logout"
-                type="button"
-                onClick={() => {
-                  logout();
-                  nav("/");
-                }}
-              >
-                <i className="fa-solid fa-right-from-bracket"></i>
-                <span>Logout</span>
+              <button className="pdS-link" onClick={() => nav("/patient/profile")}>
+                <i className="fa-regular fa-user"></i>
+                My Profile
               </button>
             </div>
+
+            <button
+              className="pdS-logout"
+              onClick={() => {
+                logout();
+                nav("/");
+              }}
+            >
+              <i className="fa-solid fa-right-from-bracket"></i>
+              Logout
+            </button>
           </aside>
 
-          <main className="pd-main">
-            <div className="pd-header">
+          {/* MAIN */}
+          <main className="pdS-main">
+            {/* TOP HEADER */}
+            <div className="pdS-top">
               <div>
-                <h2 className="pd-title">Welcome back, {firstName}</h2>
-                <div className="pd-subTitle">Here’s your health overview for today</div>
+                <h2 className="pdS-title">Welcome, {firstName}</h2>
+                <p className="pdS-muted">Here’s a quick overview of your account.</p>
               </div>
 
-              <div className="pd-headerActions">
-                <button className="pd-primaryBtn" onClick={() => nav("/find-doctors")}>
-                  <i className="fa-solid fa-plus"></i> Book Appointment
+              <div className="pdS-topRight">
+                <button className="btn btn-primary" onClick={() => nav("/find-doctors")}>
+                  <i className="fa-solid fa-plus"></i>&nbsp; Book Appointment
                 </button>
 
-                <button className="pd-iconBtn" onClick={() => alert("Notifications (coming soon)")}>
-                  <i className="fa-regular fa-bell"></i>
-                </button>
-
-                  <div className="pd-avatar" title="View Profile" onClick={() => nav("/patient/profile")} style={{ cursor: "pointer" }} >
+                <div className="pdS-avatar" title="Profile" onClick={() => nav("/patient/profile")}>
                   {firstName?.[0]?.toUpperCase() || "P"}
-                  </div>
-                
+                </div>
               </div>
             </div>
 
-            <div className="pd-stats">
-              <div className="pd-statCard">
-                <div className="pd-statTop">
-                  <div className="pd-statLabel">Total Appointments</div>
-                  <div className="pd-statIcon blue">
+            {/* STATS */}
+            <div className="pdS-stats">
+              <div className="pdS-card">
+                <div className="pdS-cardTop">
+                  <div>
+                    <div className="pdS-cardLabel">Total Appointments</div>
+                    <div className="pdS-cardValue">{stats.totalAppointments}</div>
+                  </div>
+                  <div className="pdS-icon blue">
                     <i className="fa-regular fa-calendar-check"></i>
                   </div>
                 </div>
-                <div className="pd-statValue">{stats.totalAppointments}</div>
-                <div className="pd-statHint">+2 this month</div>
               </div>
 
-              <div className="pd-statCard">
-                <div className="pd-statTop">
-                  <div className="pd-statLabel">My Doctors</div>
-                  <div className="pd-statIcon green">
+              <div className="pdS-card">
+                <div className="pdS-cardTop">
+                  <div>
+                    <div className="pdS-cardLabel">Upcoming</div>
+                    <div className="pdS-cardValue">{stats.upcomingAppointments}</div>
+                  </div>
+                  <div className="pdS-icon green">
+                    <i className="fa-regular fa-clock"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pdS-card">
+                <div className="pdS-cardTop">
+                  <div>
+                    <div className="pdS-cardLabel">My Doctors</div>
+                    <div className="pdS-cardValue">{stats.myDoctors}</div>
+                  </div>
+                  <div className="pdS-icon orange">
                     <i className="fa-solid fa-user-doctor"></i>
                   </div>
                 </div>
-                <div className="pd-statValue">{stats.myDoctors}</div>
-                <div className="pd-statHint">Active providers</div>
               </div>
 
-              <div className="pd-statCard">
-                <div className="pd-statTop">
-                  <div className="pd-statLabel">Active Prescriptions</div>
-                  <div className="pd-statIcon orange">
-                    <i className="fa-solid fa-pills"></i>
+              <div className="pdS-card">
+                <div className="pdS-cardTop">
+                  <div>
+                    <div className="pdS-cardLabel">Health Score</div>
+                    <div className="pdS-cardValue">{stats.healthScore}</div>
                   </div>
-                </div>
-                <div className="pd-statValue">{stats.activePrescriptions}</div>
-                <div className="pd-statHint">Refills needed</div>
-              </div>
-
-              <div className="pd-statCard">
-                <div className="pd-statTop">
-                  <div className="pd-statLabel">Health Score</div>
-                  <div className="pd-statIcon purple">
+                  <div className="pdS-icon purple">
                     <i className="fa-solid fa-heart"></i>
                   </div>
                 </div>
-                <div className="pd-statValue">{stats.healthScore}</div>
-                <div className="pd-statHint">Excellent</div>
+                <div className="pdS-small">Demo value</div>
               </div>
             </div>
 
-            <div className="pd-grid">
-              <section className="pd-card pd-upcoming">
-                <div className="pd-cardHead">
-                  <div className="pd-cardTitle">Upcoming Appointments</div>
-                  <Link className="pd-linkBtn" to="/appointments">
+            {/* CONTENT GRID */}
+            <div className="pdS-grid">
+              {/* UPCOMING */}
+              <section className="pdS-panel">
+                <div className="pdS-panelHead">
+                  <h3>Upcoming Appointments</h3>
+                  <Link to="/appointments" className="pdS-linkSmall">
                     View All <i className="fa-solid fa-arrow-right"></i>
                   </Link>
                 </div>
 
-                {loading && <div className="pd-muted">Loading...</div>}
-                {!loading && err && <div className="pd-error">{err}</div>}
+                {loading && <div className="pdS-muted">Loading...</div>}
+                {!loading && err && <div className="pdS-error">{err}</div>}
 
                 {!loading && !err && upcoming.length === 0 && (
-                  <div className="pd-muted">
+                  <div className="pdS-muted">
                     No appointments yet. Go to <b>Find Doctors</b> and book one.
                   </div>
                 )}
 
                 {!loading && !err && upcoming.length > 0 && (
-                  <div className="pd-list">
+                  <div className="pdS-list">
                     {upcoming.map((a) => {
                       const doctorName = a?.doctor?.name || a?.doctorName || "Doctor";
                       const deptName = a?.doctor?.department?.name || a?.department?.name || "Department";
-                      const dateText = formatDate(a?.date);
+                      const dateText = formatDate(a?.date || a?.appointmentDate);
                       const timeText = a?.time || "—";
                       const status = a?.status || "Booked";
 
+                      const cancelled = safeLower(status).includes("cancel");
+
                       return (
-                        <div className="pd-item" key={a?._id || `${doctorName}-${dateText}-${timeText}`}>
-                          <div className="pd-itemIcon">
-                            <i className="fa-solid fa-stethoscope"></i>
-                          </div>
-
-                          <div className="pd-itemMain">
-                            <div className="pd-itemTop">
-                              <div className="pd-itemTitle">{doctorName}</div>
-                              <div className={`pd-badge ${safeLower(status).includes("cancel") ? "cancel" : "ok"}`}>
-                                {status}
-                              </div>
+                        <div className="pdS-item" key={a?._id || `${doctorName}-${dateText}-${timeText}`}>
+                          <div className="pdS-itemLeft">
+                            <div className="pdS-itemIcon">
+                              <i className="fa-solid fa-stethoscope"></i>
                             </div>
-                            <div className="pd-itemSub">{deptName}</div>
+                            <div>
+                              <div className="pdS-itemTitle">{doctorName}</div>
+                              <div className="pdS-itemSub">{deptName}</div>
+                            </div>
                           </div>
 
-                          <div className="pd-itemRight">
-                            <div className="pd-itemDate">{dateText || "—"}</div>
-                            <div className="pd-itemTime">{timeText}</div>
+                          <div className="pdS-itemRight">
+                            <div className="pdS-itemDate">{dateText}</div>
+                            <div className="pdS-itemTime">{timeText}</div>
+                            <span className={`pdS-badge ${cancelled ? "cancel" : "ok"}`}>{status}</span>
                           </div>
                         </div>
                       );
@@ -301,55 +272,27 @@ export default function PatientDashboard() {
                 )}
               </section>
 
-              <section className="pd-side">
-                <div className="pd-card">
-                  <div className="pd-cardHead">
-                    <div className="pd-cardTitle">Quick Actions</div>
-                  </div>
-
-                  <div className="pd-actions">
-                    <button className="pd-actionBtn" onClick={() => nav("/find-doctors")}>
-                      <i className="fa-regular fa-calendar-plus"></i>
-                      <span>Schedule Appointment</span>
-                    </button>
-                    <button className="pd-actionBtn" onClick={() => nav("/appointments")}>
-                      <i className="fa-solid fa-user-gear"></i>
-                      <span>Manage Doctor</span>
-                    </button>
-                    <button className="pd-actionBtn" onClick={() => alert("Downloading records...")}>
-                      <i className="fa-solid fa-download"></i>
-                      <span>Download Records</span>
-                    </button>
-                    <button className="pd-actionBtn" onClick={() => alert("Refill request sent!")}>
-                      <i className="fa-solid fa-prescription-bottle-medical"></i>
-                      <span>Refill Prescription</span>
-                    </button>
-                  </div>
+              {/* QUICK ACTIONS */}
+              <section className="pdS-panel">
+                <div className="pdS-panelHead">
+                  <h3>Quick Actions</h3>
                 </div>
 
-                <div className="pd-card" style={{ marginTop: 14 }}>
-                  <div className="pd-cardHead">
-                    <div className="pd-cardTitle">Recent Activity</div>
-                  </div>
+                <div className="pdS-actions">
+                  <button className="pdS-actionBtn" onClick={() => nav("/find-doctors")}>
+                    <i className="fa-regular fa-calendar-plus"></i>
+                    Schedule Appointment
+                  </button>
 
-                  {loading && <div className="pd-muted">Loading...</div>}
+                  <button className="pdS-actionBtn" onClick={() => nav("/patient/profile")}>
+                    <i className="fa-regular fa-user"></i>
+                    Update Profile
+                  </button>
 
-                  {!loading && recentActivity.length === 0 && <div className="pd-muted">No recent activity yet.</div>}
-
-                  {!loading && recentActivity.length > 0 && (
-                    <div className="pd-activity">
-                      {recentActivity.map((it, idx) => (
-                        <div className="pd-activityItem" key={idx}>
-                          <div className="pd-dot"></div>
-                          <div>
-                            <div className="pd-activityTitle">{it.title}</div>
-                            <div className="pd-activitySub">{it.sub}</div>
-                          </div>
-                          <div className="pd-activityTime">{it.time}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <button className="pdS-actionBtn" onClick={() => nav("/appointments")}>
+                    <i className="fa-solid fa-list-check"></i>
+                    Manage Appointments
+                  </button>
                 </div>
               </section>
             </div>
