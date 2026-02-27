@@ -9,8 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import DoctorRoute from "./components/DoctorRoute";
 
-// Layouts
-import AdminLayout from "./components/AdminLayout";
+
 
 // Public pages
 import Home from "./pages/Home";
@@ -28,6 +27,8 @@ import PatientDashboard from "./pages/PatientDashboard";
 import PatientProfile from "./pages/PatientProfile";
 
 // Admin pages
+// Layouts
+import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminDepartments from "./pages/admin/AdminDepartments";
 import AdminDoctors from "./pages/admin/AdminDoctors";

@@ -2,60 +2,112 @@ import { useEffect, useState } from "react";
 import api from "../../api/api";
 
 export default function AdminAppointments() {
-  const [list, setList] = useState([]);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const res = await api.get("/api/appointments/all");
-    setList(res.data);
+    setLoading(true);
+    try {
+      const r = await api.get(
+        `/admin/appointments?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`
+      );
+      setItems(r.data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+   
+  }, []);
 
-  const setStatus = async (id, status) => {
-    await api.put(`/api/appointments/${id}/status`, { status });
+  const updateStatus = async (id, next) => {
+    await api.patch(`/admin/appointments/${id}`, { status: next });
     load();
   };
 
-  const deleteAppt = async (id) => {
-    // Admin delete not in your backend now; easiest is status Cancelled
-    // If you want true delete, tell me and I’ll add backend route.
-    if (!confirm("Cancel this appointment?")) return;
-    await api.put(`/api/appointments/${id}/status`, { status: "Cancelled" });
+  const onDelete = async (id) => {
+    if (!window.confirm("Delete this appointment?")) return;
+    await api.delete(`/admin/appointments/${id}`);
     load();
   };
 
   return (
-    <>
-      <h2>Appointment Management</h2>
-
-      <div className="card">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Patient</th><th>Doctor</th><th>Department</th>
-              <th>Date</th><th>Time</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map(a => (
-              <tr key={a._id}>
-                <td>{a.patient?.name}</td>
-                <td>{a.doctor?.name}</td>
-                <td>{a.department?.name}</td>
-                <td>{a.date}</td>
-                <td>{a.time}</td>
-                <td><span className="badge">{a.status}</span></td>
-                <td>
-                  <button className="btn" onClick={() => setStatus(a._id, "Pending")}>Pending</button>{" "}
-                  <button className="btn" onClick={() => setStatus(a._id, "Confirmed")}>Confirm</button>{" "}
-                  <button className="btn" onClick={() => setStatus(a._id, "Completed")}>Complete</button>{" "}
-                  <button className="btn" onClick={() => deleteAppt(a._id)}>Cancel</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div>
+      <div className="ad-pageHead">
+        <div>
+          <div className="ad-h1">Appointments</div>
+          <div className="ad-sub">View and manage bookings.</div>
+        </div>
       </div>
-    </>
+
+      <div className="ad-filters">
+        <div className="ad-input">
+          <i className="fa-solid fa-magnifying-glass"></i>
+          <input placeholder="Search patient/doctor..." value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">All Status</option>
+          <option value="Booked">Booked</option>
+          <option value="Cancelled">Cancelled</option>
+          <option value="Completed">Completed</option>
+        </select>
+
+        <button className="ad-btn" onClick={load}>
+          <i className="fa-solid fa-filter"></i> Apply
+        </button>
+      </div>
+
+      <div className="ad-panel">
+        {loading ? (
+          <div className="ad-muted">Loading...</div>
+        ) : items.length === 0 ? (
+          <div className="ad-muted">No appointments found.</div>
+        ) : (
+          <div className="ad-tableWrap">
+            <table className="ad-table">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Doctor</th>
+                  <th>Department</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th style={{ width: 170 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((a) => (
+                  <tr key={a._id}>
+                    <td>{a.patient?.name || "—"}</td>
+                    <td>{a.doctor?.name || "—"}</td>
+                    <td>{a.department?.name || "—"}</td>
+                    <td>{String(a.date || "").slice(0, 10) || "—"}</td>
+                    <td>{a.time || "—"}</td>
+                    <td>
+                      <span className={`ad-pill ${String(a.status).toLowerCase().includes("cancel") ? "warn" : "ok"}`}>
+                        {a.status || "Booked"}
+                      </span>
+                    </td>
+                    <td className="ad-actionsTd">
+                      <button className="ad-btnTiny" onClick={() => updateStatus(a._id, "Booked")}>Booked</button>
+                      <button className="ad-btnTiny" onClick={() => updateStatus(a._id, "Cancelled")}>Cancel</button>
+                      <button className="ad-iconBtn danger" onClick={() => onDelete(a._id)} title="Delete">
+                        <i className="fa-regular fa-trash-can"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
