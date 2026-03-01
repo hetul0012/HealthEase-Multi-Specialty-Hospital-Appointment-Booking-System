@@ -1,9 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function DoctorRoute({ children }) {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== "doctor") return <Navigate to="/" replace />;
-  return children;
+
+export default function DoctorRoute() {
+  const { user, token, authReady } = useAuth();
+
+  if (!authReady) return <div style={{ padding: 24 }}>Loading...</div>;
+
+  if (!token) return <Navigate to="/login" replace />;
+  if (user?.role !== "admin") return <Navigate to="/" replace />;
+
+  return <Outlet />;
 }

@@ -1,15 +1,21 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
+ 
+  const initialToken = localStorage.getItem("token") || "";
+  const initialUser = (() => {
+    try {
+      const u = localStorage.getItem("user");
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  })();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
+  const [token, setToken] = useState(initialToken);
+  const [user, setUser] = useState(initialUser);
 
   const login = ({ token, user }) => {
     localStorage.setItem("token", token);
@@ -25,32 +31,20 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // use this when profile updates (name/email/phone)
-  const updateUser = (partialUser) => {
-    setUser((prev) => {
-      const next = { ...(prev || {}), ...(partialUser || {}) };
-      localStorage.setItem("user", JSON.stringify(next));
-      return next;
-    });
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        login,
-        logout,
-        isLoggedIn: !!token,
-
-       
-        setUser,
-        updateUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      login,
+      logout,
+      setUser, 
+      isLoggedIn: !!token,
+      authReady: true, 
+    }),
+    [user, token]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

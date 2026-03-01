@@ -36,7 +36,10 @@ import AdminPatients from "./pages/admin/AdminPatients";
 import AdminAppointments from "./pages/admin/AdminAppointments";
 
 // Doctor pages
+import DoctorLayout from "./pages/doctor/DoctorLayout";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments";
+import DoctorProfile from "./pages/doctor/DoctorProfile";
 
 export default function App() {
   return (
@@ -96,10 +99,14 @@ export default function App() {
             path="/doctor"
             element={
               <DoctorRoute>
-                <DoctorDashboard />
+                <DoctorLayout />
               </DoctorRoute>
             }
-          />
+          >
+            <Route index element={<DoctorDashboard />} />
+            <Route path="appointments" element={<DoctorAppointments />} />
+            <Route path="profile" element={<DoctorProfile />} />
+          </Route>
 
           {/* ================= ADMIN ================= */}
           <Route

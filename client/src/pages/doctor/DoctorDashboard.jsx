@@ -1,76 +1,123 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api/api";
 
+function safeLower(s) {
+  return (s || "").toString().toLowerCase();
+}
+
 export default function DoctorDashboard() {
-  const [list, setList] = useState([]);
-  const [msg, setMsg] = useState("");
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
 
-  const load = async () => {
-    const res = await api.get("/api/doctor/appointments");
-    setList(res.data);
-  };
+  useEffect(() => {
+    let mounted = true;
 
-  useEffect(() => { load(); }, []);
-
-  const update = async (id, patch) => {
-    setMsg("");
-    try {
-      await api.put(`/api/doctor/appointments/${id}`, patch);
-      setMsg("✅ Updated");
-      load();
-    } catch (e) {
-      setMsg(e.response?.data?.message || "Update failed");
+    async function load() {
+      setLoading(true);
+      setErr("");
+      try {
+        const res = await api.get("/doctor/appointments");
+        if (!mounted) return;
+        setAppointments(Array.isArray(res.data) ? res.data : []);
+      } catch (e) {
+        if (!mounted) return;
+        setErr(e?.response?.data?.message || "Failed to load doctor dashboard.");
+        setAppointments([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     }
-  };
 
-  const remove = async (id) => {
-    if (!confirm("Delete this appointment?")) return;
-    await api.delete(`/api/doctor/appointments/${id}`);
     load();
-  };
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const reschedule = async (id, currentDate, currentTime) => {
-    const date = prompt("New date (YYYY-MM-DD):", currentDate);
-    if (!date) return;
-    const time = prompt("New time (ex: 10:30 AM):", currentTime);
-    if (!time) return;
-    update(id, { date, time });
-  };
+  const stats = useMemo(() => {
+    const total = appointments.length;
+    const upcoming = appointments.filter((a) => !safeLower(a?.status).includes("cancel") && !safeLower(a?.status).includes("complete")).length;
+    const completed = appointments.filter((a) => safeLower(a?.status).includes("complete")).length;
+    return { total, upcoming, completed };
+  }, [appointments]);
+
+  const recent = useMemo(() => appointments.slice(0, 5), [appointments]);
 
   return (
-    <div className="container">
-      <h2>Doctor Dashboard</h2>
-      {msg && <p style={{ color: msg.includes("✅") ? "green" : "red" }}>{msg}</p>}
-
-      <div className="card">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Patient</th><th>Email</th><th>Phone</th>
-              <th>Date</th><th>Time</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map(a => (
-              <tr key={a._id}>
-                <td>{a.patient?.name}</td>
-                <td>{a.patient?.email}</td>
-                <td>{a.patient?.phone || "-"}</td>
-                <td>{a.date}</td>
-                <td>{a.time}</td>
-                <td><span className="badge">{a.status}</span></td>
-                <td>
-                  <button className="btn" onClick={() => update(a._id, { status: "Confirmed" })}>Confirm</button>{" "}
-                  <button className="btn" onClick={() => update(a._id, { status: "Completed" })}>Complete</button>{" "}
-                  <button className="btn" onClick={() => update(a._id, { status: "Cancelled" })}>Cancel</button>{" "}
-                  <button className="btn" onClick={() => reschedule(a._id, a.date, a.time)}>Reschedule</button>{" "}
-                  <button className="btn" onClick={() => remove(a._id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="ad-content">
+      <div className="ad-head">
+        <h2 className="ad-title">Dashboard Overview</h2>
+        <div className="ad-subtitle">Quick summary of your appointments</div>
       </div>
+
+      {loading && <div className="ad-muted">Loading...</div>}
+      {!loading && err && <div className="ad-error">{err}</div>}
+
+      {!loading && !err && (
+        <>
+          <div className="ad-stats">
+            <div className="ad-statCard">
+              <div className="ad-statLabel">Total Appointments</div>
+              <div className="ad-statValue">{stats.total}</div>
+              <div className="ad-statIcon blue">
+                <i className="fa-regular fa-calendar"></i>
+              </div>
+            </div>
+
+            <div className="ad-statCard">
+              <div className="ad-statLabel">Upcoming</div>
+              <div className="ad-statValue">{stats.upcoming}</div>
+              <div className="ad-statIcon green">
+                <i className="fa-regular fa-clock"></i>
+              </div>
+            </div>
+
+            <div className="ad-statCard">
+              <div className="ad-statLabel">Completed</div>
+              <div className="ad-statValue">{stats.completed}</div>
+              <div className="ad-statIcon purple">
+                <i className="fa-regular fa-circle-check"></i>
+              </div>
+            </div>
+          </div>
+
+          <div className="ad-card" style={{ marginTop: 16 }}>
+            <div className="ad-cardHead">
+              <div className="ad-cardTitle">Recent Appointments</div>
+            </div>
+
+            {recent.length === 0 ? (
+              <div className="ad-muted">No appointments yet.</div>
+            ) : (
+              <div className="ad-tableWrap">
+                <table className="ad-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Email</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recent.map((a) => (
+                      <tr key={a._id}>
+                        <td>{a?.patient?.name || "Patient"}</td>
+                        <td>{a?.patient?.email || "-"}</td>
+                        <td>{a?.date ? new Date(a.date).toLocaleDateString() : "-"}</td>
+                        <td>{a?.time || "-"}</td>
+                        <td>{a?.status || "Booked"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -9,33 +9,35 @@ const Department = require("./models/Department");
 const Doctor = require("./models/Doctor");
 const User = require("./models/User");
 
-// Auth routes
+const bcrypt = require("bcryptjs");
+
+// Routes
 const authRoutes = require("./routes/authRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 
-// For admin seed password
-const bcrypt = require("bcryptjs");
+// Admin routes 
+const adminRoutes = require("./routes/admin");
+
+// Middleware
+const { auth, requireRole } = require("./middleware/auth");
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/api/appointments", appointmentRoutes);
 
-//  Test route
+// Test route
 app.get("/", (req, res) => {
   res.send("HealthEase API is running...");
 });
 
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/admin", auth, requireRole("admin"), adminRoutes);
 
-//  Auth
-app.use("/api/auth", require("./routes/authRoutes"));
-
-// Appointment routes
-app.use("/api/appointments", require("./routes/appointmentRoutes"));
-
-// Get all departments (public)
+// -------------------- PUBLIC: Departments --------------------
 app.get("/api/departments", async (req, res) => {
   try {
     const departments = await Department.find().sort({ name: 1 });
@@ -45,8 +47,7 @@ app.get("/api/departments", async (req, res) => {
   }
 });
 
-//  Get all doctors (public)
-
+// -------------------- PUBLIC: Doctors --------------------
 app.get("/api/doctors", async (req, res) => {
   try {
     const { departmentId, q } = req.query;
@@ -71,7 +72,7 @@ app.get("/api/doctors", async (req, res) => {
   }
 });
 
-//  Get single doctor by ID (public)
+// PUBLIC: Single doctor
 app.get("/api/doctors/:id", async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id).populate("department", "name");
@@ -82,15 +83,12 @@ app.get("/api/doctors/:id", async (req, res) => {
   }
 });
 
-
-// Seed departments + doctors + admin user
+// -------------------- SEED --------------------
 app.post("/api/seed", async (req, res) => {
   try {
-    // 1) Clear old data
     await Department.deleteMany({});
     await Doctor.deleteMany({});
 
-    // 2) Insert departments
     const departments = await Department.insertMany([
       { name: "Cardiology", description: "Heart and cardiovascular care" },
       { name: "Neurology", description: "Brain and nervous system care" },
@@ -102,7 +100,6 @@ app.post("/api/seed", async (req, res) => {
 
     const deptId = (name) => departments.find((d) => d.name === name)._id;
 
-    // 3) Insert doctors
     const doctors = await Doctor.insertMany([
       {
         name: "Dr. Sarah Johnson",
@@ -184,13 +181,12 @@ app.post("/api/seed", async (req, res) => {
       },
     ]);
 
-    // 4)  CREATE ADMIN USER (only if not exists)
+    // Admin
     const adminEmail = "admin@healthease.com";
     const adminExists = await User.findOne({ email: adminEmail });
 
     if (!adminExists) {
       const passwordHash = await bcrypt.hash("admin123", 10);
-
       await User.create({
         name: "Admin",
         email: adminEmail,
@@ -199,15 +195,11 @@ app.post("/api/seed", async (req, res) => {
       });
     }
 
-    // 5) Return response
     res.status(201).json({
       message: "Seed success (Departments + Doctors + Admin created)",
       departmentsCount: departments.length,
       doctorsCount: doctors.length,
-      adminLogin: {
-        email: adminEmail,
-        password: "admin123",
-      },
+      adminLogin: { email: adminEmail, password: "admin123" },
     });
   } catch (err) {
     console.error(err);
@@ -215,8 +207,7 @@ app.post("/api/seed", async (req, res) => {
   }
 });
 
-//Server
-
+// Start server
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {

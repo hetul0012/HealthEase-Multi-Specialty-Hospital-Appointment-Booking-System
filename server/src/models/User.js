@@ -14,8 +14,9 @@ const userSchema = new mongoose.Schema(
       default: "patient",
     },
 
-    // optional link if user is a doctor account
+  
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+    doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
   },
   { timestamps: true }
 );
