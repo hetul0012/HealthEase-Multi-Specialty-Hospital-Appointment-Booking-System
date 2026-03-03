@@ -56,7 +56,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/departments")
+    api.get("/api/departments")
       .then((r) => setDepts(r.data))
       .catch(() => setDepts([]))
       .finally(() => setLoading(false));
