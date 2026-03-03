@@ -26,10 +26,15 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: [
-  "http://localhost:5173",
-  "https://health-ease-multi-specialty-hospita.vercel.app"
-],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); 
+
+      if (origin.includes("localhost")) return callback(null, true);
+
+      if (origin.endsWith(".vercel.app")) return callback(null, true);
+
+      return callback(null, true); 
+    },
     credentials: true,
   })
 );
