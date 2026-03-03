@@ -40,7 +40,7 @@ export default function PatientDashboard() {
       } catch (e1) {
         try {
           // fallback
-          const res2 = await api.get("/appointments");
+          const res2 = await api.get("/api/appointments");
           if (!mounted) return;
           setAppointments(Array.isArray(res2.data) ? res2.data : []);
         } catch (e2) {
