@@ -31,8 +31,8 @@ export default function AdminDoctors() {
     setLoading(true);
     try {
       const [d1, d2] = await Promise.all([
-        api.get("/admin/departments"),
-        api.get(`/admin/doctors?q=${encodeURIComponent(q)}&departmentId=${encodeURIComponent(departmentId)}`),
+        api.get("/api/admin/departments"),
+        api.get(`/api/admin/doctors?q=${encodeURIComponent(q)}&departmentId=${encodeURIComponent(departmentId)}`),
       ]);
       setDepartments(d1.data || []);
       setItems(d2.data || []);
@@ -82,7 +82,7 @@ export default function AdminDoctors() {
       if (editing?._id) {
         await api.put(`/admin/doctors/${editing._id}`, form);
       } else {
-        await api.post("/admin/doctors", form);
+        await api.post("/api/admin/doctors", form);
       }
       setOpen(false);
       await load();
