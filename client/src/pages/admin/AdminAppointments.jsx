@@ -11,7 +11,7 @@ export default function AdminAppointments() {
     setLoading(true);
     try {
       const r = await api.get(
-        `/admin/appointments?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`
+        `/api/admin/appointments?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`
       );
       setItems(r.data || []);
     } finally {
