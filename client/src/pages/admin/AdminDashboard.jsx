@@ -24,9 +24,9 @@ export default function AdminDashboard() {
       
 
         const [docRes, patientRes, apptRes] = await Promise.allSettled([
-          api.get("/doctors"),
-          api.get("/admin/patients"),       
-          api.get("/appointments"),         
+          api.get("/api/doctors"),
+          api.get("/api/admin/patients"),       
+          api.get("/api/appointments"),         
         ]);
 
         const doctors = docRes.status === "fulfilled" ? docRes.value.data : [];
