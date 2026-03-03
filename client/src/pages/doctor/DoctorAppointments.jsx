@@ -16,7 +16,7 @@ export default function DoctorAppointments() {
     setLoading(true);
     setErr("");
     try {
-      const res = await api.get("/doctor/appointments", { params: { q, status } });
+      const res = await api.get("/api/doctor/appointments", { params: { q, status } });
       setItems(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       setErr(e?.response?.data?.message || "Failed to load appointments.");
