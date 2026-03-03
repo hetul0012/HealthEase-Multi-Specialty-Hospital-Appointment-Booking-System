@@ -17,7 +17,7 @@ export default function DoctorDashboard() {
       setLoading(true);
       setErr("");
       try {
-        const res = await api.get("/doctor/appointments");
+        const res = await api.get("/api/doctor/appointments");
         if (!mounted) return;
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } catch (e) {
