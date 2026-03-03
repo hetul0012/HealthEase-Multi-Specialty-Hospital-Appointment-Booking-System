@@ -34,7 +34,7 @@ export default function PatientDashboard() {
 
       try {
         // try mine first
-        const res = await api.get("/appointments/mine");
+        const res = await api.get("/api/appointments/mine");
         if (!mounted) return;
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } catch (e1) {
