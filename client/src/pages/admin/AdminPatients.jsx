@@ -57,7 +57,7 @@ export default function AdminPatients() {
 
     try {
       if (editing?._id) {
-        await api.put(`/admin/patients/${editing._id}`, form);
+        await api.put(`/api/admin/patients/${editing._id}`, form);
       } else {
         await api.post("/api/admin/patients", form);
       }
@@ -70,7 +70,7 @@ export default function AdminPatients() {
 
   const onDelete = async (id) => {
     if (!window.confirm("Delete this patient?")) return;
-    await api.delete(`/admin/patients/${id}`);
+    await api.delete(`/api/admin/patients/${id}`);
     load();
   };
 
