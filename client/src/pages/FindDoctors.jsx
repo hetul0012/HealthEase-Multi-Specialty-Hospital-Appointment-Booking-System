@@ -28,7 +28,7 @@ export default function FindDoctors() {
   const fetchAll = async (override = {}) => {
     setLoading(true);
     try {
-      const deptRes = await api.get("/departments");
+      const deptRes = await api.get("/api/departments");
       setDepartments(deptRes.data || []);
 
       const query = new URLSearchParams();
@@ -40,7 +40,7 @@ export default function FindDoctors() {
       if (deptVal) query.set("departmentId", deptVal);
       if (sortVal) query.set("sort", sortVal);
 
-      const docRes = await api.get(`/doctors?${query.toString()}`);
+      const docRes = await api.get(`/api/doctors?${query.toString()}`);
       setDoctors(docRes.data || []);
     } catch (e) {
       setDepartments([]);
