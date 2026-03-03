@@ -26,15 +26,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); 
-
-      if (origin.includes("localhost")) return callback(null, true);
-
-      if (origin.endsWith(".vercel.app")) return callback(null, true);
-
-      return callback(null, true); 
-    },
+    origin: true,
     credentials: true,
   })
 );
