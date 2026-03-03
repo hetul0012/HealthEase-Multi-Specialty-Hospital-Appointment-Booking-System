@@ -8,7 +8,7 @@ export default function MyAppointments() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/appointments/mine");
+      const res = await api.get("/api/appointments/mine");
       setItems(res.data);
     } finally {
       setLoading(false);
