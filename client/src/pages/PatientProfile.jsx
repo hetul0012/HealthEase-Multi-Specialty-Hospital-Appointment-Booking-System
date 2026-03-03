@@ -38,7 +38,7 @@ export default function PatientProfile() {
           try {
             res = await api.get("/api/auth/me");
           } catch {
-            res = await api.get("/users/me");
+            res = await api.get("/api/users/me");
           }
         }
 
