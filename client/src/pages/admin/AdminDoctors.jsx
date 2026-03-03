@@ -80,7 +80,7 @@ export default function AdminDoctors() {
 
     try {
       if (editing?._id) {
-        await api.put(`/admin/doctors/${editing._id}`, form);
+        await api.put(`/api/admin/doctors/${editing._id}`, form);
       } else {
         await api.post("/api/admin/doctors", form);
       }
@@ -93,7 +93,7 @@ export default function AdminDoctors() {
 
   const onDelete = async (id) => {
     if (!window.confirm("Delete this doctor?")) return;
-    await api.delete(`/admin/doctors/${id}`);
+    await api.delete(`/api/admin/doctors/${id}`);
     load();
   };
 
