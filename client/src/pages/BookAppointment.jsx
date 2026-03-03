@@ -80,7 +80,7 @@ export default function BookAppointment() {
       setSaving(true);
 
       //  FIX endpoint + payload
-      await api.post("/appointments", {
+      await api.post("/api/appointments", {
         doctorId, // backend should use this
         date: selectedDate,
         time: selectedTime,
