@@ -25,13 +25,13 @@ export default function AdminAppointments() {
   }, []);
 
   const updateStatus = async (id, next) => {
-    await api.patch(`/admin/appointments/${id}`, { status: next });
+    await api.patch(`/api/admin/appointments/${id}`, { status: next });
     load();
   };
 
   const onDelete = async (id) => {
     if (!window.confirm("Delete this appointment?")) return;
-    await api.delete(`/admin/appointments/${id}`);
+    await api.delete(`/api/admin/appointments/${id}`);
     load();
   };
 
