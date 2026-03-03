@@ -16,7 +16,7 @@ export default function AdminPatients() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await api.get(`/admin/patients?q=${encodeURIComponent(q)}`);
+      const r = await api.get(`/api/admin/patients?q=${encodeURIComponent(q)}`);
       setItems(r.data || []);
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ export default function AdminPatients() {
       if (editing?._id) {
         await api.put(`/admin/patients/${editing._id}`, form);
       } else {
-        await api.post("/admin/patients", form);
+        await api.post("/api/admin/patients", form);
       }
       setOpen(false);
       await load();
