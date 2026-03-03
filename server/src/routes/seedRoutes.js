@@ -4,7 +4,7 @@ const User = require("../models/User");
 const Department = require("../models/Department");
 const Doctor = require("../models/Doctor");
 
-router.post("/", async (req, res) => {
+router.get("/", async (req, res) => {
   await Doctor.deleteMany({});
   await Department.deleteMany({});
 
