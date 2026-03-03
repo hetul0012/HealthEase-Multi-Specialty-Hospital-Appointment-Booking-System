@@ -7,7 +7,7 @@ export default function DoctorProfile() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    api.get("/doctor/me")
+    api.get("/api/doctor/me")
       .then((res) => setForm(res.data))
       .catch((e) => setErr(e?.response?.data?.message || "Failed to load profile"));
   }, []);
